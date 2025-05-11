@@ -14,10 +14,10 @@ execute:
 ---
 
 ```{r setup, echo = FALSE}
-JuliaCall::julia_setup(JULIA_HOME = "/Applications/Julia-1.9.app/Contents/Resources/julia/bin/")
+JuliaCall::julia_setup(JULIA_HOME = "/Applications/Julia-1.11.app/Contents/Resources/julia/bin/")
 knitr::opts_chunk$set(engine.path = list(
-  python = "/Library/Frameworks/Python.framework/Versions/3.10/bin/python3.10",
-  julia = "/Applications/Julia-1.9.app/Contents/Resources/julia/bin/"
+  python = "/opt/anaconda3/bin/python3.12",
+  julia = "/Applications/Julia-1.11.app/Contents/Resources/julia/bin/"
 ))
 ```
 

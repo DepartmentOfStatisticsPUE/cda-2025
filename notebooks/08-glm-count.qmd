@@ -14,11 +14,10 @@ execute:
 ---
 
 ```{r setup, echo = FALSE}
-#JuliaCall::julia_setup(JULIA_HOME = "/Applications/Julia-1.9.app/Contents/Resources/julia/bin/")
+JuliaCall::julia_setup(JULIA_HOME = "/Applications/Julia-1.11.app/Contents/Resources/julia/bin/")
 knitr::opts_chunk$set(engine.path = list(
-  python = "/Library/Frameworks/Python.framework/Versions/3.10/bin/python3.10"
-  #,
-#  julia = "/Applications/Julia-1.9.app/Contents/Resources/julia/bin/"
+  python = "/opt/anaconda3/bin/python3.12",
+  julia = "/Applications/Julia-1.11.app/Contents/Resources/julia/bin/"
 ))
 ```
 
@@ -27,12 +26,23 @@ knitr::opts_chunk$set(engine.path = list(
 ::: panel-tabset
 ## R
 
+```{r, eval=FALSE}
+install.packages("countreg", repos="http://R-Forge.R-project.org")
+install.packages("topmodels", repos="http://R-Forge.R-project.org")
+install.packages("performance")
+install.packages("distributions3")
+install.packages("modelsummary")
+install.packages("marginaleffects")
+install.packages("rstudioapi")
+```
+
 ```{r}
-library(MASS) ## glm.nb
+library(MASS) ## glm.nb -- regresji ujemniej dwumianowej
 library(countreg)
-library(performance)
-library(modelsummary)
-library(boot)
+library(performance) ## określone miary jakosci
+library(modelsummary) 
+library(boot) 
+library(marginaleffects)
 ```
 
 Read in the dataset for the lecture and specify column classes (types).
@@ -99,7 +109,26 @@ first(df, 5)
 ## R
 
 ```{r}
+mean(df$vacancies)
+var(df$vacancies)
+barplot(table(df$vacancies))
+summary(df$vacancies)
+```
+
+```{r}
 m1 <- glm(vacancies ~ size + public + woj, data = df, family = poisson())
+summary(m1)
+exp(coef(m1))
+```
+Marginal effects
+
+```{r}
+avg_slopes(m1)
+```
+
+Quasi-poisson regression (aka NB type 1)
+
+```{r}
 m2 <- glm(vacancies ~ size + public + woj, data = df, family = quasipoisson())
 ```
 
@@ -131,7 +160,7 @@ modelsummary(list("Poisson"=m1, "QPoisson"=m2))
 ```
 
 ```{r}
-rootogram(m1, main= "Poisson")
+topmodels::rootogram(m1, plot = "base", xlim = c(0,10))
 ```
 
 ```{r}
@@ -142,13 +171,14 @@ glm.diag.plots(m1)
 exp(coef(m1))
 ```
 
-Interpretation:
+Interpretation 
 
--   if the company size decreases from big to medium (ceteris paribus)
-    then average number of vacancies decrease by 86% (1- 0.14).
--   if we compare companies from dolnośląskie (02) with mazowieckie (14,
-    `woj14`; ceteris paribus) then average number of vacancies will
-    increase by 80%.
++ Medium vs. Large Companies
+    + $\exp(\hat{\beta})$ `= 0.136`: The expected vacancies for Medium-sized companies is approximately 13.6% of that for Large companies, holding all other variables constant. 
+    + `AME = -1.694`: Medium-sized companies have, on average, 1.694 fewer vacancies compared to Large companies, holding all other factors constant. 
++ Mazowieckie (14) vs. Dolnośląskie (02):
+    + $\exp(\hat{\beta})$ `= 2.022`: The expected count in Mazowieckie province is approximately 2.02 times higher (or 102.2% higher) than in Dolnośląskie province, holding all other variables constant.
+    + `AME = 1.193`: The expected vacancies in Mazowieckie province is, on average, 1.193 higher than in Dolnośląskie province, holding all other factors constant. 
 
 ## Python
 
@@ -178,7 +208,7 @@ summary(m3)
 ```
 
 ```{r}
-rootogram(m3, main= "NB")
+topmodels::rootogram(m3, plot = "base", xlim = c(0,10))
 ```
 
 ```{r}
@@ -189,13 +219,6 @@ glm.diag.plots(m3)
 exp(coef(m3))
 ```
 
-Interpretation (the same as for Poisson regression):
-
--   if the company size decreases from big to medium (ceteris paribus)
-    then average number of vacancies decrease by 86% (1- 0.14).
--   if we compare companies from dolnośląskie (02) with mazowieckie (14,
-    `woj14`; ceteris paribus) then average number of vacancies will
-    increase by 80%.
 
 ## Python
 
