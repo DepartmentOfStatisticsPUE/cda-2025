@@ -39,6 +39,7 @@ install.packages("rstudioapi")
 ```{r}
 library(MASS) ## glm.nb -- regresji ujemniej dwumianowej
 library(countreg)
+library(topmodels)
 library(performance) ## określone miary jakosci
 library(modelsummary) 
 library(boot) 
@@ -111,8 +112,11 @@ first(df, 5)
 ```{r}
 mean(df$vacancies)
 var(df$vacancies)
-barplot(table(df$vacancies))
+barplot(table(df$vacancies), xlim = c(0, 15))
+mean(df$vacancies == 0)
 summary(df$vacancies)
+summary(df$vacancies[df$vacancies > 0])
+barplot(table(df$vacancies[df$vacancies > 0]), xlim = c(0, 26))
 ```
 
 ```{r}
@@ -120,6 +124,7 @@ m1 <- glm(vacancies ~ size + public + woj, data = df, family = poisson())
 summary(m1)
 exp(coef(m1))
 ```
+
 Marginal effects
 
 ```{r}
@@ -135,6 +140,9 @@ m2 <- glm(vacancies ~ size + public + woj, data = df, family = quasipoisson())
 ```{r}
 summary(m2)
 ```
+$$
+\phi = 1 + 1/k \quad \text{for NB1 models} \quad Var(Y)=\phi\mu
+$$
 
 Dispersion parameter $\phi = 38.06172$ which can be calculated based on
 `m1` model:
@@ -160,7 +168,7 @@ modelsummary(list("Poisson"=m1, "QPoisson"=m2))
 ```
 
 ```{r}
-topmodels::rootogram(m1, plot = "base", xlim = c(0,10))
+topmodels::rootogram(m1, plot = "base", xlim = c(0,11))
 ```
 
 ```{r}
@@ -236,7 +244,7 @@ print(m3.summary())
 ## R
 
 ```{r}
-BIC(m1, m3)
+BIC(m1, m2, m3)
 ```
 
 ```{r}

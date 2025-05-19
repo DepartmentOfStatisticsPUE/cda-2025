@@ -6,7 +6,7 @@ format:
     table-of-contents: true
     number-sections: true
     df-print: kable
-editor: visual
+editor: source
 execute: 
   eval: true
   warning: false
@@ -14,12 +14,13 @@ execute:
 ---
 
 ```{r setup, echo = FALSE}
-#JuliaCall::julia_setup(JULIA_HOME = "/Applications/Julia-1.9.app/Contents/Resources/julia/bin/")
+JuliaCall::julia_setup(JULIA_HOME = "/Applications/Julia-1.11.app/Contents/Resources/julia/bin/")
 knitr::opts_chunk$set(engine.path = list(
-  python = "/Library/Frameworks/Python.framework/Versions/3.10/bin/python3.10",
-  julia = "/Applications/Julia-1.9.app/Contents/Resources/julia/bin/julia"
+  python = "/opt/anaconda3/bin/python3.12",
+  julia = "/Applications/Julia-1.11.app/Contents/Resources/julia/bin/"
 ))
 ```
+
 
 # Setup
 
@@ -29,14 +30,21 @@ knitr::opts_chunk$set(engine.path = list(
 ```{r, eval = F}
 install.packages("pscl")
 install.packages("countreg", repos="http://R-Forge.R-project.org")
+install.packages("topmodels", repos="http://R-Forge.R-project.org")
+install.packages("distributions3")
+install.packages("modelsummary")
+install.packages("marginaleffects")
+install.packages("rstudioapi")
 ```
 
 ```{r}
 library(MASS) ## glm.nb
 library(countreg)
 library(pscl)
-library(modelsummary)
-library(boot)
+library(topmodels)
+library(modelsummary) 
+library(boot) 
+library(marginaleffects)
 ```
 
 Read in the dataset for the lecture and specify column classes (types).
@@ -96,9 +104,7 @@ df=CSV.read("../data/polish-jvs.csv", DataFrame,
                          :size => String, :nace_division => String, :nace => String));
 first(df, 5)
 ```
-
 :::
-
 
 # Zero-inflated Poisson (ZIP)
 
@@ -117,8 +123,27 @@ summary(m1)
 ```
 
 ```{r}
-rootogram(m1)
+rootogram(m1, plot = "base", xlim = c(0,11))
 ```
+```{r}
+avg_slopes(m1, type = "zero")
+```
+
+```{r}
+avg_slopes(m1, type = "response")
+```
+
+Interpretation:
+
++ Count Model (Poisson component):
+    + Public sector coefficient: exp(-0.580550)  ≈ 0.560 -- Being a public organization is associated with approximately 44% fewer vacancies compared to private organizations, holding other factors constant.
+    + Public sector coefficient (AME):  -0.563 -- On average, public organizations have 0.563 fewer vacancies than private organizations, holding other variables constant.
+    
++ Zero-Inflation Model (logit component):
+    + Public sector coefficient: exp(0.02671) ≈ 1.027 -- Public organizations have approximately 2.7% higher odds of having zero vacancies compared to private organizations, but this effect is not statistically significant (p = 0.331).
+    + Public sector coefficient (AME): 0.00291 -- Being a public organization is associated with a 0.291 percentage point increase in the probability of having zero vacancies compared to private organizations.
+    
+
 
 ## Python
 
@@ -132,9 +157,7 @@ print(m1.summary())
 ```
 
 ## Julia
-
 :::
-
 
 # Zero-inflated Negative Binomial (ZINB)
 
@@ -153,12 +176,18 @@ summary(m2)
 ```
 
 ```{r}
-rootogram(m2)
+rootogram(m2, plot = "base", xlim = c(0,11))
 ```
 
 ```{r}
 BIC(m1, m2)
 ```
+
+**Exercise**:
+
++ run poisson regression with the same set of variables
++ run NB regression with the same set of variables
++ which model we should use? PO, NB, ZIP or ZINB regression? Why? Justify
 
 ## Python
 
@@ -166,96 +195,7 @@ BIC(m1, m2)
 m2 = sm.ZeroInflatedNegativeBinomialP(endog=y, exog=x, exog_infl=x, inflation='logit').fit(maxiter = 500)
 print(m2.summary())
 ```
-## Julia
-
-:::
-
-
-# Simulations
-
-::: panel-tabset
-## R
-
-```{r}
-# Set a seed for reproducibility
-set.seed(123)
-
-# Define the parameters
-n <- 10000  # number of observations
-p_zero <- 0.5  # proportion of extra zeros
-lambda <- 2  # Poisson parameter
-X <- runif(n, -1, 1)  # predictor variable
-W <- runif(n, -1, 1)  # predictor variable for zero-inflation
-b <- 0.5  # regression coefficient
-g <- -0.5  # regression coefficient for zero-inflation
-
-# Generate binary indicators for the zero process
-zero_process <- rbinom(n, 1, 1 / (1 + exp(-W * g)))
-
-# Generate counts for the non-zero process
-poisson_process <- rpois(n, exp(X * b))
-
-# Generate the zero-inflated data
-Y <- zero_process * 0 + (1 - zero_process) * poisson_process
-```
-
-```{r}
-barplot(table(Y))
-```
-
-```{r}
-# Create a data frame
-data <- data.frame(Y = Y, X = X, W = W)
-
-# Fit a zero-inflated Poisson model
-model <- zeroinfl(Y ~ X | W, data = data, dist = "poisson")
-
-# Print the summary
-summary(model)
-
-```
-
-## Python
-
-```{python}
-# Import the required libraries
-import numpy as np
-import statsmodels.api as sm
-
-# Set a seed for reproducibility
-np.random.seed(123)
-
-# Define the parameters
-n = 10000  # number of observations
-p_zero = 0.5  # proportion of extra zeros
-lambda_ = 2  # Poisson parameter
-X = np.random.uniform(-1, 1, n)  # predictor variable
-W = np.random.uniform(-1, 1, n)  # predictor variable for zero-inflation
-b = 0.5  # regression coefficient
-g = -0.5  # regression coefficient for zero-inflation
-
-# Generate binary indicators for the zero process
-zero_process = np.random.binomial(1, 1 / (1 + np.exp(-W * g)), n)
-
-# Generate counts for the non-zero process
-poisson_process = np.random.poisson(lambda_, n)
-
-# Generate the zero-inflated data
-Y = zero_process * 0 + (1 - zero_process) * poisson_process
-
-# Add intercepts to the predictor variables
-X_intercept = sm.add_constant(X)
-W_intercept = sm.add_constant(W)
-
-# Fit a zero-inflated Poisson model
-model = sm.ZeroInflatedPoisson(endog=Y, exog=X_intercept, exog_infl=W_intercept).fit()
-
-# Print the summary
-print(model.summary())
-
-```
 
 ## Julia
 :::
-
 
