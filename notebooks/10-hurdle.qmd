@@ -14,10 +14,10 @@ execute:
 ---
 
 ```{r setup, echo = FALSE, eval = FALSE}
-#JuliaCall::julia_setup(JULIA_HOME = "/Applications/Julia-1.9.app/Contents/Resources/julia/bin/")
+JuliaCall::julia_setup(JULIA_HOME = "/Applications/Julia-1.11.app/Contents/Resources/julia/bin/")
 knitr::opts_chunk$set(engine.path = list(
-  python = "/Library/Frameworks/Python.framework/Versions/3.10/bin/python3.10"
-  #julia = "/Applications/Julia-1.9.app/Contents/Resources/julia/bin/"
+  python = "/opt/anaconda3/bin/python3.12",
+  julia = "/Applications/Julia-1.11.app/Contents/Resources/julia/bin/"
 ))
 ```
 
@@ -36,6 +36,8 @@ library(MASS) ## glm.nb
 library(countreg)
 library(pscl)
 library(modelsummary)
+library(marginaleffects)
+library(performance)
 library(boot)
 ```
 
@@ -112,15 +114,19 @@ first(df, 5)
 ::: panel-tabset
 ## R
 
+ZI model:    E(Y|X) - counts,      P(Y=0 |Z) - zero-inflation part
+HURDE model: E(Y|X, X>0) - counts, P(Y > 0|Z) - hurdle part
+
 ```{r}
-m1 <- pscl::hurdle(formula = vacancies ~ size + public,
+m1 <- countreg::hurdle(formula = vacancies ~ size + public,
                    dist = "poisson", ## vacancies ~ zero-truncated Poisson distribution
-                   link = "logit", ## P(Y > 0 | x) | w oneinf P(Y = 0)
+                   link = "logit", ## P(Y > 0 | Z) | w oneinf P(Y = 0 | Z)
                    data = df)
+summary(m1)
 ```
 
 ```{r}
-m1a <- pscl::zeroinfl(formula = vacancies ~ size + public,
+m1a <- countreg::zeroinfl(formula = vacancies ~ size + public,
                    dist = "poisson",
                    link = "logit", 
                    data = df)
@@ -132,6 +138,14 @@ modelsummary(list("ZIP"=m1a, "HP"=m1))
 
 ```{r}
 BIC(m1, m1a)
+```
+
+```{r}
+# avg_slopes(m1, type = "zero") # P(Y > 0 | Z) not working
+```
+
+```{r}
+avg_slopes(m1, type = "response")
 ```
 
 ## Python
@@ -192,3 +206,21 @@ modelsummary(list("HurdleNB"=m2, "ZINB"=m3))
 
 ## Julia
 :::
+
+Exercise:
+
+1. fit NB regression with the following variables: vacancies ~ size + nace
+2. fit Hurdle NB regression with the following variables: vacancies ~ size + nace
+3. fit ZI NB regression with the following variables: vacancies ~ size + nace
+4. what is the fit? which model is better and why? 
+
+
+# Model quality
+
+```{r}
+pR2(m1) |> round(2)
+pR2(m1a) |> round(2)
+pR2(m2) |> round(2)
+pR2(m3) |> round(2)
+```
+

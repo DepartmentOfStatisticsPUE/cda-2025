@@ -30,7 +30,7 @@ knitr::opts_chunk$set(engine.path = list(
 ```{r, eval = F}
 install.packages("pscl")
 install.packages("countreg", repos="http://R-Forge.R-project.org")
-install.packages("topmodels", repos="http://R-Forge.R-project.org")
+install.packages("topmodels", repos="http://R-Forge.R-project.org") ## rootogram
 install.packages("distributions3")
 install.packages("modelsummary")
 install.packages("marginaleffects")
@@ -112,9 +112,20 @@ first(df, 5)
 ## R
 
 ```{r}
+mean(df$vacancies == 0) ## share of 0s in our data
+table(df$vacancies == 0) ## freq of 0s in our data
+```
+
+Why companies report 0 vacancies? 
+
+- b2b, contract of mandate -- the type of contract
+- type of company
+- at a given quarter these companies did not have vacancies at all (but in future they may, or they had in the past)
+
+```{r}
 m1 <- pscl::zeroinfl(formula = vacancies ~ size + public,
-                     dist = "poisson",
-                     link = "logit",
+                     dist = "poisson", ## E(Y|X) -- that is why the model is called zero-inflation poisson regression
+                     link = "logit",   ## P(Y = 0 | X) -- logistic regression 
                      data = df)
 ```
 
@@ -122,15 +133,34 @@ m1 <- pscl::zeroinfl(formula = vacancies ~ size + public,
 summary(m1)
 ```
 
+Task for you:
+
+- run the following model: vacancies ~ nace
+- provide interpretation for selected levels: in particular section J (Information and communication)
+
 ```{r}
-rootogram(m1, plot = "base", xlim = c(0,11))
-```
-```{r}
-avg_slopes(m1, type = "zero")
+exercise1 <- pscl::zeroinfl(formula = vacancies ~ nace,
+                     dist = "poisson", ## E(Y|X) -- that is why the model is called zero-inflation poisson regression
+                     link = "logit",   ## P(Y = 0 | X) -- logistic regression 
+                     data = df)
+summary(exercise1)
+
+## count: naceJ         2.6053     0.1130  23.052  < 2e-16 ***
+## zi: naceJ           -0.92210    0.14460  -6.377 1.81e-10 ***
 ```
 
 ```{r}
-avg_slopes(m1, type = "response")
+rootogram(m1, plot = "base", xlim = c(0,11))
+```
+
+Estimate average marginal effects
+
+```{r}
+avg_slopes(m1, type = "zero") ## P(Y=0|X)
+```
+
+```{r}
+avg_slopes(m1, type = "response") ## AME for E(Y|X)
 ```
 
 Interpretation:
@@ -143,6 +173,27 @@ Interpretation:
     + Public sector coefficient: exp(0.02671) ≈ 1.027 -- Public organizations have approximately 2.7% higher odds of having zero vacancies compared to private organizations, but this effect is not statistically significant (p = 0.331).
     + Public sector coefficient (AME): 0.00291 -- Being a public organization is associated with a 0.291 percentage point increase in the probability of having zero vacancies compared to private organizations.
     
+Exercise:
+
+1. fit Poisson regression with the following variables: vacancies ~ size + nace
+2. fit ZI Poisson regression with the following variables: vacancies ~ size + nace
+3. what is the fit? which model is better and why? 
+
+```{r}
+ex2_po <- glm(formula = vacancies ~ size + nace,
+              family = poisson(), data=df)
+
+ex2_zip <- pscl::zeroinfl(formula = vacancies ~ size + nace,
+                          dist = "poisson",  link = "logit",  data = df)
+
+data.frame(AIC = AIC(ex2_po, ex2_zip), BIC = BIC(ex2_po, ex2_zip))
+```
+
+```{r}
+par(mfrow=c(1,2))
+rootogram(ex2_po, plot = "base", xlim = c(0,11), main = "Poisson")
+rootogram(ex2_zip, plot = "base", xlim = c(0,11), main = "ZIP")
+```
 
 
 ## Python
@@ -176,6 +227,12 @@ summary(m2)
 ```
 
 ```{r}
+BIC(m1, ## ZI poisson
+    m2  ## ZI neg bin
+    )
+```
+
+```{r}
 rootogram(m2, plot = "base", xlim = c(0,11))
 ```
 
@@ -185,9 +242,49 @@ BIC(m1, m2)
 
 **Exercise**:
 
-+ run poisson regression with the same set of variables
-+ run NB regression with the same set of variables
-+ which model we should use? PO, NB, ZIP or ZINB regression? Why? Justify
+1. fit Poisson regression with the following variables: vacancies ~ size + nace
+2. fit ZI Poisson regression with the following variables: vacancies ~ size + nace
+3. fit NB regression with the following variables: vacancies ~ size + nace
+4. fit ZI NB regression with the following variables: vacancies ~ size + nace
+5. what is the fit? which model is better and why? 
+
+```{r}
+ex2_po <- glm(formula = vacancies ~ size + nace,
+              family = poisson(), data=df)
+
+ex2_zip <- pscl::zeroinfl(formula = vacancies ~ size + nace,
+                          dist = "poisson",  link = "logit",  data = df)
+
+ex2_nb <- glm.nb(formula = vacancies ~ size + nace, data=df)
+
+ex2_zinb <- pscl::zeroinfl(formula = vacancies ~ size + nace,
+                          dist = "negbin",  link = "logit",  data = df)
+
+
+data.frame(AIC = AIC(ex2_po, ex2_zip, ex2_nb, ex2_zinb), 
+           BIC = BIC(ex2_po, ex2_zip, ex2_nb, ex2_zinb))
+```
+
+
+```{r}
+par(mfrow=c(1,2))
+rootogram(ex2_po, plot = "base", xlim = c(0,11), main = "Poisson")
+rootogram(ex2_zip, plot = "base", xlim = c(0,11), main = "ZIP")
+
+rootogram(ex2_nb, plot = "base", xlim = c(0,11), main = "NegBin")
+rootogram(ex2_zinb, plot = "base", xlim = c(0,11), main = "ZINB")
+
+```
+
+E(Y|X), P(Y=0|Z)
+
+Y ~ X | Z 
+
+```{r}
+ex2_zip <- pscl::zeroinfl(formula = vacancies ~ size + nace | nace,
+                          dist = "poisson",  link = "logit",  data = df)
+summary(ex2_zip)
+```
 
 ## Python
 
