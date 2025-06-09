@@ -83,11 +83,11 @@ summary(model1)
 
 ```{r}
 model2 <- geeglm(resp ~ age + smoke + age:smoke, 
-              id=id, 
-              data=ohio,
-              family=binomial, 
-              corstr="independence", 
-              scale.fix=TRUE)
+                 id=id, 
+                 data=ohio,
+                 family=binomial, 
+                 corstr="independence", 
+                 scale.fix=TRUE)
 summary(model2)
 ```
 
@@ -96,11 +96,11 @@ summary(model2)
 
 ```{r}
 model3 <- geeglm(resp ~ age + smoke + age:smoke, 
-              id=id, 
-              data=ohio,
-              family=binomial, 
-              corstr="exchangeable", 
-              scale.fix=TRUE)
+                 id=id, 
+                 data=ohio,
+                 family=binomial, 
+                 corstr="exchangeable", 
+                 scale.fix=TRUE)
 summary(model3)
 ```
 
@@ -153,6 +153,23 @@ avg_slopes(model2)
 ## Julia
 :::
 
-Zadanie
+Exercise:
+
+1. read the `beer` and limit data to single households (`size`)
+
+```{r}
+library(readxl)
+beer <- read_excel("../data/beer-gee.xlsx")
+beer_single <- subset(beer, size == 1)
+```
+
+2. Poisson GEE regression models:
+
++ formula: `beers ~ time + locality + education`
++ allow for overdispersion `scale.fix = F`
++ check different correlation structures: independent, exchangable, autocorrelated
++ which model is the best? Why?
+
+
 
 
