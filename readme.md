@@ -18,7 +18,7 @@
    + Poisson and Negative binomial regression [[code for/from lecture](https://htmlpreview.github.io/?https://github.com/DepartmentOfStatisticsPUE/cda-2025/blob/main/notebooks/08-glm-count.html)]
    + Zero-inflated Poisson (ZIP) and zero-inflated negative binomial (ZINB) [[code for/from lecture](https://htmlpreview.github.io/?https://github.com/DepartmentOfStatisticsPUE/cda-2025/blob/main/notebooks/09-zip-zinb.html)]
    + Hurdle Poisson (HP) and Hurdle negative binomial [[code for/from lecture](https://htmlpreview.github.io/?https://github.com/DepartmentOfStatisticsPUE/cda-2025/blob/main/notebooks/10-hurdle.html)]
-7. Generalized estimating equations [[code for/from lecture]()]
+7. Generalized estimating equations [[code for/from lecture](https://htmlpreview.github.io/?https://github.com/DepartmentOfStatisticsPUE/cda-2025/blob/main/notebooks/11-gee.html)]
    
 ## Case study
 
@@ -38,6 +38,7 @@
     - `marginaleffects`, `modelsummary` 
     - `car`
     - `see`, `performance`, `patchwork`
+    - `geepack`
 -   Python:
     -   `scipy`, `numpy`, `pandas`
     - `pingouin`, `matplotlib`, `statsmodels`

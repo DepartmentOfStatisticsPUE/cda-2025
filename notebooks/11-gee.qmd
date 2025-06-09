@@ -1,0 +1,158 @@
+---
+title: "Generalized linear regression: Hurdle"
+format: 
+  html:
+    self-contained: true
+    table-of-contents: true
+    number-sections: true
+    df-print: kable
+editor: source
+execute: 
+  eval: true
+  warning: false
+  message: false
+---
+
+```{r setup, echo = FALSE, eval = FALSE}
+JuliaCall::julia_setup(JULIA_HOME = "/Applications/Julia-1.11.app/Contents/Resources/julia/bin/")
+knitr::opts_chunk$set(engine.path = list(
+  python = "/opt/anaconda3/bin/python3.12",
+  julia = "/Applications/Julia-1.11.app/Contents/Resources/julia/bin/"
+))
+```
+
+# Setup
+
+::: panel-tabset
+## R
+
+```{r, eval = F}
+install.packages("geepack")
+```
+
+```{r}
+library(geepack)
+library(marginaleffects)
+```
+
+In this example we will use the `ohio` dataset from the `geepack`
+package (source: Fitzmaurice, G.M. and Laird, N.M. (1993) A likelihood-based method for analyzing longitudinal binary responses, Biometrika 80: 141–151.)
+
+-   The ohio data frame has 2148 rows and 4 columns. The dataset is a
+    subset of the six-city study, a longitudinal study of the health
+    effects of air pollution.
+-   This data frame contains the following columns:
+    -   `resp` -- an indicator of wheeze status (1=yes, 0=no)
+    -   `id` -- a numeric vector for subject id
+    -   `age` -- a numeric vector of age, 0 is 9 years old
+    -   `smoke` -- an indicator of maternal smoking at the first year of
+        the study
+
+```{r}
+data(ohio)
+head(ohio)
+```
+
+```{r}
+table(ohio$resp)
+```
+
+```{r}
+unique(ohio$id) |> NROW()
+```
+
+```{r}
+table(ohio$id) |> 
+  table()
+```
+
+```{r}
+aggregate(resp ~ smoke, data=ohio, FUN=mean)
+```
+
+**Model 1**: Simple glm model
+
+
+```{r}
+model1 <- glm(resp ~ age + smoke + age:smoke, family = binomial, data=ohio)
+summary(model1)
+```
+
+**Model 2**: Independence (assumes no correlation between repeated measures)
+
+
+```{r}
+model2 <- geeglm(resp ~ age + smoke + age:smoke, 
+              id=id, 
+              data=ohio,
+              family=binomial, 
+              corstr="independence", 
+              scale.fix=TRUE)
+summary(model2)
+```
+
+**Model 3**: Exchangeable (assumes constant correlation between any two time points)
+
+
+```{r}
+model3 <- geeglm(resp ~ age + smoke + age:smoke, 
+              id=id, 
+              data=ohio,
+              family=binomial, 
+              corstr="exchangeable", 
+              scale.fix=TRUE)
+summary(model3)
+```
+
+Interpretation:
+
++ $\alpha = 0.355$ is the estimated within-subject correlation coefficient between any two observations from the same child. This means that any two wheeze measurements taken from the same child at different time points have a correlation of approximately 0.355.
++ About 35.5% of the variation in wheeze status can be attributed to stable, child-specific factors (genetics, chronic conditions, home environment, etc.)
++ The other ~64.5% represents time-varying factors, measurement error, and random variation
+
+**Model 4**: AR(1) (assumes correlation decreases with time separation)
+
+```{r}
+model4 <- geeglm(resp ~ age + smoke + age:smoke, 
+              id=id, 
+              data=ohio,
+              family=binomial, 
+              corstr="ar1", 
+              scale.fix=TRUE)
+summary(model4)
+```
+
+Interpretation:
+
++  $\alpha= 0.501$ is the lag-1 autocorrelation coefficient - the correlation between consecutive time points (adjacent measurements) in the AR(1) autoregressive structure.
++ Adjacent time points (e.g., ages 9-10): correlation = $\alpha= 0.501$
++ Two time points apart (e.g., ages 9-11): correlation = $\alpha^2= 0.501^2=0.251$
++ Three time points apart (e.g., ages 9-12): correlation = $\alpha^3= 0.501^3=0.126$
+
+```{r}
+QIC(model2, model3, model4)
+```
+
+General interpretation:
+
++ Age effect `(-0.14 to -0.15)`: Significant negative effect (p ≈ 0.015) indicating wheeze probability decreases as children get older. 
++ Maternal smoking `(0.29 to 0.31)`: Marginally significant effect (p = 0.095-0.133) suggesting children of smoking mothers have higher wheeze rates, though this varies by model.
++ Interaction term `(0.07 to 0.08)`: Non-significant across all models (p > 0.36), indicating the age effect doesn't significantly differ between smoking and non-smoking households.
+
++ Models 2 and 3 tie with QIC = 1830 (independence and exchangeable)
++ Model 4 has slightly higher QIC = 1831 (AR1 is least preferred)
+
+
+```{r}
+avg_slopes(model2)
+```
+
+
+## Python
+
+## Julia
+:::
+
+Zadanie
+
+
