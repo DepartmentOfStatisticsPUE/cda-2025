@@ -150,26 +150,29 @@ avg_slopes(model2)
 
 ## Python
 
+TBA
+
 ## Julia
+
+TBA
+
 :::
 
-Exercise:
+# An exercise for the lecture
 
-1. read the `beer` and limit data to single households (`size`)
-
+1. Read the `beer` data and limit the data to single households (`size`)
 ```{r}
 library(readxl)
 beer <- read_excel("../data/beer-gee.xlsx")
 beer_single <- subset(beer, size == 1)
 ```
 
-2. Poisson GEE regression models:
+2. Fit Poisson GEE regression models:
 
-+ formula: `beers ~ time + locality + education`
-+ allow for overdispersion `scale.fix = F`
-+ check different correlation structures: independent, exchangable, autocorrelated
-+ which model is the best? Why?
-
++ Formula: `beers ~ time + locality + education`
++ Allow for overdispersion: `scale.fix = FALSE`
++ Check different correlation structures: `independent, exchangeable, autocorrelated`
++ Which model is the best? Why?
 
 
 

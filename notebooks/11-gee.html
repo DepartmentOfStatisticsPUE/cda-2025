@@ -3227,6 +3227,7 @@ window.Quarto = {
    
   <ul>
   <li><a href="#setup" id="toc-setup" class="nav-link active" data-scroll-target="#setup"><span class="header-section-number">1</span> Setup</a></li>
+  <li><a href="#an-exercise-for-the-lecture" id="toc-an-exercise-for-the-lecture" class="nav-link" data-scroll-target="#an-exercise-for-the-lecture"><span class="header-section-number">2</span> An exercise for the lecture</a></li>
   </ul>
 </nav>
 </div>
@@ -3550,16 +3551,18 @@ Type: response</code></pre>
 </div>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
-
+<p>TBA</p>
 </div>
 <div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
-
+<p>TBA</p>
 </div>
 </div>
 </div>
-<p>Exercise:</p>
+</section>
+<section id="an-exercise-for-the-lecture" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> An exercise for the lecture</h1>
 <ol type="1">
-<li>read the <code>beer</code> and limit data to single households (<code>size</code>)</li>
+<li>Read the <code>beer</code> data and limit the data to single households (<code>size</code>)</li>
 </ol>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readxl)</span>
@@ -3567,13 +3570,13 @@ Type: response</code></pre>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>beer_single <span class="ot">&lt;-</span> <span class="fu">subset</span>(beer, size <span class="sc">==</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <ol start="2" type="1">
-<li>Poisson GEE regression models:</li>
+<li>Fit Poisson GEE regression models:</li>
 </ol>
 <ul>
-<li>formula: <code>beers ~ time + locality + education</code></li>
-<li>allow for overdispersion <code>scale.fix = F</code></li>
-<li>check different correlation structures: independent, exchangable, autocorrelated</li>
-<li>which model is the best? Why?</li>
+<li>Formula: <code>beers ~ time + locality + education</code></li>
+<li>Allow for overdispersion: <code>scale.fix = FALSE</code></li>
+<li>Check different correlation structures: <code>independent, exchangeable, autocorrelated</code></li>
+<li>Which model is the best? Why?</li>
 </ul>
 </section>
 
